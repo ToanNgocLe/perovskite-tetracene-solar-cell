@@ -37,20 +37,22 @@ bandgap_pev_exp(1,1) = bandgap_pev_base;
 %thermal properties of perovskite
 beta_pev = 311; %J/(kg*K)
 %1J = 1.602*10^(19)eV
-thickness_pev = 3000; %m
+thickness_pev = 400*10^(-9); %m
 l = 1; %m
 volume_pev = thickness_pev * l * l;
 bulk_density_pev = 4286.4; %kg/m^3
 mass_pev = bulk_density_pev * volume_pev;
 binding_energy_pev = 50*10^(-3); %eV
+C_prime_pev = mass_pev * beta_pev;
 
 %thermal properties of tetracene
 beta_tet = 1585;
-thickness_tet = 3000;
+thickness_tet = 400*10^(-9);
 volume_tet = thickness_tet * l * l;
 density_tet = 1.2; %g/cm^3
 mass_tet = density_tet * 10^(6) * 10^(-3) * volume_tet;
 bandgap_tet = 2.43; 
+C_prime_tet = mass_tet*beta_tet;
 
 %electron-phonon interaction
 A_eff = 8.09*10^(-3); % eV
@@ -74,7 +76,7 @@ g_inv = zeros(1,resolution);
 figure
 graph_space = linspace(shortest_wavelength,longest_wavelength,resolution);
 for i = 1:1:resolution
-G(1,n) = 0.809*((10293)*(lambda(1,i)^(-5)))* 1/(exp(2.5/lambda(1,i))-1);
+G(1,n) = 0.473*((10293)*(lambda(1,i)^(-5)))* 1/(exp(2.5/lambda(1,i))-1);
 g_inv(1,n) = G(1,n)*increment;
 n = n+1;
 end
@@ -83,7 +85,7 @@ g_total = sum(g_inv,'all');
 % # of photons
 phi = zeros(1,resolution);
 for i = 1:1:resolution
-    phi(1,i) = (G(1,i)* lambda(1,i))/(h*c);
+    phi(1,i) = (G(1,i)* increment*10^(-6)*lambda(1,i))/(h*c);
 end
 
 %energy of photons
@@ -110,12 +112,11 @@ for i = 1:1:time_step
         end
     end
 
-
 %temperature rise because of thermalization
     if i == 1
     T_pev_control(1,i) = T_pev_base;
     else
-    T_pev_control(1,i) = T_pev_control(1,i-1) + ((sum_e_w_control(1,i))/(1.602*10^(19)))/(mass_pev*beta_pev);
+    T_pev_control(1,i) = T_pev_control(1,i-1) + (10^(-10))*(sum_e_w_control(1,i))/(1.602*10^(19))/C_prime_pev;
     end
     
     if T_pev_control(1,i) >= 65 + 273.15
@@ -177,13 +178,13 @@ for i = 1:1:time_step
     if i == 1
     T_pev_exp(1,i) = T_pev_base;
     else
-    T_pev_exp(1,i) = T_pev_exp(1,i-1) + ((sum_e_w_exp(1,i))/(1.602*10^(19)))/(mass_pev*beta_pev);
+    T_pev_exp(1,i) = T_pev_exp(1,i-1) + (10^(-10))*((sum_e_w_exp(1,i))/(1.602*10^(19)))/(C_prime_pev);
     end
 
     if i == 1
     T_tet(1,i) = T_tet_base;
     else
-    T_tet(1,i) = T_tet(1,i-1) + ((sum_e_w_tet(1,i))/(1.602*10^(19)))/(mass_tet*beta_tet);
+    T_tet(1,i) = T_tet(1,i-1) + (10^(-10))*((sum_e_w_tet(1,i))/(1.602*10^(19)))/(C_prime_tet);
     end
 
 
@@ -254,5 +255,6 @@ hold off
 
 figure
 bar(z)
+
 
 
